@@ -3,9 +3,6 @@ package controllers
 import (
 	"sort"
 	"strconv"
-	"time"
-
-	"github.com/astaxie/beego/logs"
 )
 
 var (
@@ -19,9 +16,6 @@ func init() {
 }
 
 func poolStats() {
-	log := logs.NewLogger()
-	log.SetLogger(logs.AdapterConsole)
-
 	for {
 		select {
 		case <-quit:
@@ -47,8 +41,6 @@ func poolStats() {
 
 				p50 := calcP(responses, 50)
 				publish <- newEvent(P50, strconv.Itoa(p50))
-
-				time.Sleep(time.Second * 5)
 			}
 		}
 	}
