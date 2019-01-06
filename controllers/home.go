@@ -91,7 +91,7 @@ func (c *HomeController) Post() {
 							log.Debug("Returning from go routine")
 							return
 						default:
-							c.MeteorBurst(r.URL, r.Method, r.Payload, headerList)
+							c.meteorBurst(r.URL, r.Method, r.Payload, headerList)
 						}
 					}
 				}()
@@ -115,7 +115,7 @@ func (c *HomeController) Post() {
 }
 
 // MeteorBurst makes a REST call to the provided endpoint
-func (c *HomeController) MeteorBurst(url string, method string, payload string, headers []string) {
+func (c *HomeController) meteorBurst(url string, method string, payload string, headers []string) {
 	log := logs.NewLogger()
 	log.SetLogger(logs.AdapterConsole)
 
