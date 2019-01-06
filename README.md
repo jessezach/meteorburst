@@ -8,6 +8,17 @@ Meteor Burst will provide you with a realtime average response time, 99th percen
 Make sure you have Go setup and `$GOPATH` added to path.</br>
 Also make sure you have `$GOPATH/bin` add to path. 
 [Check here](https://stackoverflow.com/questions/21001387/how-do-i-set-the-gopath-environment-variable-on-ubuntu-what-file-must-i-edit)
+- Install bee tool.</br>
+`$ go get -u github.com/beego/bee`
+
+- Install code.</br>
+`$ go get github.com/jz-jess/meteorburst`
+
+- Inside project root, run server</br>
+`$ cd jz-jess/meteorburst`</br>
+`$ bee run`</br>
+
+    OR
 
 - Install go dep</br>
   `brew install dep` or `go get -u github.com/golang/dep/cmd/dep`
@@ -20,11 +31,8 @@ Also make sure you have `$GOPATH/bin` add to path.
 `$ cd meteor-burst`</br>
 `$ dep ensure`
 
-- Install bee tool.</br>
-`$ go get -u github.com/beego/bee`
-
 - Inside project root, run server</br>
-`bee run`</br>
+`$ bee run`</br>
 ```______
 | ___ \
 | |_/ /  ___   ___
