@@ -25,10 +25,10 @@ Also make sure you have `$GOPATH/bin` add to path.
 
 - Navigate to your Gopath/src and clone the repository </br>
 ```$ cd $GOPATH/src/``` </br>
-```git clone https://github.com/jz-jess/meteor-burst.git```
+```git clone https://github.com/jz-jess/meteorburst.git```
 
-- Navigate to meteor-burst and install dependencies</br>
-`$ cd meteor-burst`</br>
+- Navigate to meteorburst and install dependencies</br>
+`$ cd meteorburst`</br>
 `$ dep ensure`
 
 - Inside project root, run server</br>
@@ -39,7 +39,7 @@ Also make sure you have `$GOPATH/bin` add to path.
 | ___ \ / _ \ / _ \
 | |_/ /|  __/|  __/
 \____/  \___| \___| v1.10.0
-2019/01/06 00:31:24 INFO     ▶ 0001 Using 'meteor-burst' as 'appname'
+2019/01/06 00:31:24 INFO     ▶ 0001 Using 'meteorburst' as 'appname'
 2019/01/06 00:31:24 INFO     ▶ 0002 Initializing watcher...
 ```
 
