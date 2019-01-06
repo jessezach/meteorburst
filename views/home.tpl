@@ -1,5 +1,10 @@
 {{ template "base.tpl" . }}
 {{ define "content" }}
+    {{ if .error }}
+    <div class="alert alert-danger" role="alert">
+        {{ .error }}
+    </div>
+    {{ end }}
     <form action="/?command=start" method="post">
         <div class="form-group">
             <div class="form-row">
@@ -43,7 +48,7 @@
             <div class="form-row">
                 <div class="col-md-6">
                     <label for="users">Users</label>
-                    <input type="text" name="users" class="form-control" id="users" placeholder="50">
+                    <input type="text" name="users" class="form-control" id="users" placeholder="50" required="required">
                 </div>
             </div>
         </div>

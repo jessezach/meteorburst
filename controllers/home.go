@@ -84,6 +84,7 @@ func (c *HomeController) Post() {
 			users = r.Users
 
 			for i := 0; i < r.Users; i++ {
+				log.Debug("Starting user %#v", i+1)
 				go func() {
 					for {
 						select {
