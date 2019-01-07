@@ -7,22 +7,6 @@
     </div>
     <div class="row">
         <div class="col-xl-3 col-sm-6 mb-3">
-            <div class="card text-white bg-primary o-hidden h-100">
-                <div class="card-body">
-                    <div class="card-body-icon">
-                        <i class="fas fa-exchange-alt"></i>
-                    </div>
-                    <div class="mr-5" id="stats">0</div>
-                </div>
-                <a class="card-footer text-white clearfix small z-1" href="#">
-                    <span class="float-left">Avg Response time</span>
-                    <span class="float-right">
-                        <i class="fas fa-angle-right"></i>
-                    </span>
-                </a>
-            </div>
-        </div>
-        <div class="col-xl-3 col-sm-6 mb-3">
             <div class="card text-white bg-warning o-hidden h-100">
                 <div class="card-body">
                     <div class="card-body-icon">
@@ -32,6 +16,38 @@
                 </div>
                 <a class="card-footer text-white clearfix small z-1" href="#">
                     <span class="float-left">Total Requests Sent</span>
+                    <span class="float-right">
+                        <i class="fas fa-angle-right"></i>
+                    </span>
+                </a>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-3">
+            <div class="card text-white bg-danger o-hidden h-100">
+                <div class="card-body">
+                    <div class="card-body-icon">
+                        <i class="fas fa-stopwatch"></i>
+                    </div>
+                    <div id="rps" class="mr-5">0</div>
+                </div>
+                <a class="card-footer text-white clearfix small z-1" href="#">
+                    <span class="float-left">Requests Per Second</span>
+                    <span class="float-right">
+                        <i class="fas fa-angle-right"></i>
+                    </span>
+                </a>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-3">
+            <div class="card text-white bg-primary o-hidden h-100">
+                <div class="card-body">
+                    <div class="card-body-icon">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="mr-5" id="stats">0</div>
+                </div>
+                <a class="card-footer text-white clearfix small z-1" href="#">
+                    <span class="float-left">Avg Response time</span>
                     <span class="float-right">
                         <i class="fas fa-angle-right"></i>
                     </span>
@@ -109,7 +125,7 @@
     <div class="card mb-3">
         <div class="card-header">
             <i class="fas fa-chart-area"></i>
-            Average Response Time(milliseconds)</div>
+            Average Response Time(millis)</div>
         <div class="card-body">
             <canvas id="myAreaChart" width="100%" height="30"></canvas>
         </div>

@@ -3,6 +3,7 @@ package controllers
 import (
 	"sort"
 	"strconv"
+	"time"
 )
 
 var (
@@ -28,8 +29,11 @@ func poolStats() {
 
 			if length%100 == 0 {
 				resp := getMean(responses)
-
 				publish <- newEvent(MESSAGE, strconv.Itoa(resp))
+
+				diff := (time.Now().UnixNano() / int64(time.Millisecond)) - testStartTime
+				rps := rps(diff, length)
+				publish <- newEvent(RPS, strconv.Itoa((int(rps))))
 
 				totalRequests += 100
 				publish <- newEvent(TOTAL, strconv.Itoa(totalRequests))
@@ -77,4 +81,8 @@ func calcP(slice []int, metricType int, length int) int {
 		n = slice[idx]
 	}
 	return n
+}
+
+func rps(diff int64, length int) float64 {
+	return float64(1000) / float64(diff) * float64(length)
 }

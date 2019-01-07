@@ -82,6 +82,7 @@ func (c *HomeController) Post() {
 
 			running = true
 			users = r.Users
+			setStartTime(time.Now().UnixNano() / int64(time.Millisecond))
 
 			for i := 0; i < r.Users; i++ {
 				log.Debug("Starting user %#v", i+1)
@@ -109,6 +110,7 @@ func (c *HomeController) Post() {
 			close(quit)
 			running = false
 			users = 0
+			setStartTime(0)
 		}
 		c.Data["json"] = "{'stopped': true}"
 		c.ServeJSON()

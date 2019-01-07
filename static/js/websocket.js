@@ -43,6 +43,9 @@ $(document).ready(function () {
         case 6: //P50
             $('#fifty').text(data.Content + " ms");
             break;
+        
+        case 7: //RPS
+            $('#rps').text(data.Content);
         }
     };
 

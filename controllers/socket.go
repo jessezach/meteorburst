@@ -8,23 +8,31 @@ import (
 
 var quit chan bool
 var running bool
+var testStartTime int64
 
 // Subscriber obj
 type Subscriber struct {
 	Conn *websocket.Conn // Only for WebSocket users; otherwise nil.
 }
 
+// Constants for type of message
 const (
 	MESSAGE = 2
 	TOTAL   = 3
 	P90     = 4
 	P99     = 5
 	P50     = 6
+	RPS     = 7
 )
 
+// Event data structure that is sent to the websocket
 type Event struct {
 	Type    int
 	Content string
+}
+
+func setStartTime(time int64) {
+	testStartTime = time
 }
 
 // New event
