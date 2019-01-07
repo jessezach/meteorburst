@@ -59,5 +59,5 @@ App should be running on `http://localhost:8080/`
 ![Alt text](/readme-images/stop.png "Home screen")
 
 ## Note
-Do not refresh the page when tests are running, the data displayed is not stored and will be lost.</br>
+Please star the repository if you find this useful.</br>
 For any queries or issues, raise an issue or email me at iamjess988@gmail.com
