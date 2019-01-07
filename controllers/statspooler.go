@@ -24,8 +24,9 @@ func poolStats() {
 
 		case r := <-response:
 			responses = append(responses, r)
+			length := len(responses)
 
-			if len(responses)%100 == 0 {
+			if length%100 == 0 {
 				resp := getMean(responses)
 
 				publish <- newEvent(MESSAGE, strconv.Itoa(resp))
@@ -33,13 +34,14 @@ func poolStats() {
 				totalRequests += 100
 				publish <- newEvent(TOTAL, strconv.Itoa(totalRequests))
 
-				p90 := calcP(responses, 90)
+				sort.Ints(responses)
+				p90 := calcP(responses, 90, length)
 				publish <- newEvent(P90, strconv.Itoa(p90))
 
-				p99 := calcP(responses, 99)
+				p99 := calcP(responses, 99, length)
 				publish <- newEvent(P99, strconv.Itoa(p99))
 
-				p50 := calcP(responses, 50)
+				p50 := calcP(responses, 50, length)
 				publish <- newEvent(P50, strconv.Itoa(p50))
 			}
 		}
@@ -54,10 +56,8 @@ func getMean(slice []int) int {
 	return sum / len(slice)
 }
 
-func calcP(slice []int, metricType int) int {
-	sort.Ints(slice)
+func calcP(slice []int, metricType int, length int) int {
 	var n int
-	length := len(slice)
 
 	switch metricType {
 
