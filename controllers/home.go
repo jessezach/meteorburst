@@ -76,7 +76,7 @@ func (c *HomeController) Post() {
 			quit = make(chan bool)
 			var headerList []string
 
-			if r.Headers != "" {
+			if len(strings.TrimSpace(r.Headers)) > 0 {
 				headerList = strings.Split(r.Headers, ";")
 			}
 
