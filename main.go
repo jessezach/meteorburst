@@ -1,11 +1,10 @@
 package main
 
 import (
-	_ "github.com/jz-jess/meteorburst/routers"
 	"github.com/astaxie/beego"
+	_ "github.com/jz-jess/meteorburst/routers"
 )
 
 func main() {
 	beego.Run()
 }
-
