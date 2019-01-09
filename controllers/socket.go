@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"container/list"
+	"encoding/json"
 
+	"github.com/astaxie/beego/logs"
 	"github.com/gorilla/websocket"
 )
 
@@ -81,6 +83,30 @@ func broadcaster() {
 					}
 					break
 				}
+			}
+		}
+	}
+}
+
+// broadcastWebSocket broadcasts messages to WebSocket users.
+func broadcastWebSocket(event Event) {
+	log := logs.NewLogger()
+	log.SetLogger(logs.AdapterConsole)
+
+	data, err := json.Marshal(event)
+
+	if err != nil {
+		log.Error("Fail to marshal event:", err)
+		return
+	}
+
+	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
+		// Immediately send event to WebSocket users.
+		ws := sub.Value.(Subscriber).Conn
+		if ws != nil {
+			if ws.WriteMessage(websocket.TextMessage, data) != nil {
+				// User disconnected.
+				unsubscribe <- ws
 			}
 		}
 	}

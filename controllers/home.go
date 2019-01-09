@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -170,24 +169,4 @@ func (c *HomeController) Join() {
 	Join(ws)
 	c.Data["success"] = true
 	c.ServeJSON()
-}
-
-// broadcastWebSocket broadcasts messages to WebSocket users.
-func broadcastWebSocket(event Event) {
-	data, err := json.Marshal(event)
-	if err != nil {
-		beego.Error("Fail to marshal event:", err)
-		return
-	}
-
-	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
-		// Immediately send event to WebSocket users.
-		ws := sub.Value.(Subscriber).Conn
-		if ws != nil {
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
-				// User disconnected.
-				unsubscribe <- ws
-			}
-		}
-	}
 }
