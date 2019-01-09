@@ -21,4 +21,5 @@
 /Godeps/
 meteorburst
 .DS_Store
+/tests/
 # End of https://www.gitignore.io/api/go
