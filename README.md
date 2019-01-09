@@ -1,4 +1,5 @@
 # Meteor Burst
+[![Go Report Card](https://goreportcard.com/badge/github.com/jz-jess/meteorburst)](https://goreportcard.com/report/github.com/jz-jess/meteorburst)
 
 Meteor Burst is simplistic load testing tool. It can be used to quickly run basic loads tests against a REST API.
 It provides a simple form based UI where you can provide the URL, Headers, Method, Payload and number of users to simulate. </br>
