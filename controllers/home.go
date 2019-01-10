@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -16,6 +17,15 @@ import (
 // HomeController : controller
 type HomeController struct {
 	beego.Controller
+}
+
+type Request struct {
+	MType   int
+	URL     string
+	Headers []string
+	Method  string
+	Payload string
+	Users   int
 }
 
 // RequestDetails form details
@@ -83,19 +93,29 @@ func (c *HomeController) Post() {
 			users = r.Users
 			setStartTime(time.Now().UnixNano() / int64(time.Millisecond))
 
-			for i := 0; i < r.Users; i++ {
-				log.Debug("Starting user %#v", i+1)
-				go func() {
-					for {
-						select {
-						case <-quit:
-							log.Debug("Returning from go routine")
-							return
-						default:
-							c.meteorBurst(r.URL, r.Method, r.Payload, headerList)
+			if slaves == 0 {
+				for i := 0; i < r.Users; i++ {
+					log.Debug("Starting user %#v", i+1)
+					go func() {
+						for {
+							select {
+							case <-quit:
+								log.Debug("Returning from go routine")
+								return
+							default:
+								c.meteorBurst(r.URL, r.Method, r.Payload, headerList)
+							}
 						}
-					}
-				}()
+					}()
+				}
+			} else {
+				usersPerSlave := users / slaves
+				request := &Request{MType: 2, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
+				r, _ := json.Marshal(request)
+				log.Debug("Sending request %#v", string(r))
+				for i := 0; i < slaves; i++ {
+					write <- request
+				}
 			}
 		} else {
 			flash.Error("%#v", err.Error())
@@ -110,6 +130,9 @@ func (c *HomeController) Post() {
 			running = false
 			users = 0
 			setStartTime(0)
+			for i := 0; i < slaves; i++ {
+				stopClient <- "stop"
+			}
 		}
 		c.Data["json"] = "{'stopped': true}"
 		c.ServeJSON()
@@ -135,7 +158,7 @@ func (c *HomeController) meteorBurst(url string, method string, payload string, 
 		if len(headers) > 0 {
 			for i := 0; i < len(headers); i++ {
 				header := strings.Split(headers[i], ":")
-				req.Header.Add(header[0], header[1])
+				req.Header.Add(strings.TrimSpace(header[0]), strings.TrimSpace(header[1]))
 			}
 		}
 
