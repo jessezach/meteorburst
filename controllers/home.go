@@ -110,7 +110,7 @@ func (c *HomeController) Post() {
 				}
 			} else {
 				usersPerSlave := users / slaves
-				request := &Request{MType: 2, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
+				request := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
 				r, _ := json.Marshal(request)
 				log.Debug("Sending request %#v", string(r))
 				for i := 0; i < slaves; i++ {

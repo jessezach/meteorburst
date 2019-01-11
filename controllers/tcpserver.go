@@ -20,9 +20,16 @@ type Resp struct {
 	Content string
 }
 
+const (
+	CLOSED_CONNECTION = 1
+	MSG               = 2
+	STOP_TEST         = 3
+)
+
 var slaves = 0
 var write = make(chan *Request)
 var stopClient = make(chan string)
+var exitFunc = make(chan net.Conn)
 
 func reader(conn net.Conn) {
 	log := logs.NewLogger()
@@ -39,8 +46,12 @@ func reader(conn net.Conn) {
 			return
 		}
 
-		if r.MType == 1 {
+		// Client closed connection
+		if r.MType == CLOSED_CONNECTION {
+			exitFunc <- conn // Tells corresponding writer goroutine to exit
 			conn.Close()
+			slaves--
+			log.Debug("Connection closed by a client. Total slaves %v", slaves)
 			return
 		}
 		resp, _ := strconv.Atoi(r.Content)
@@ -62,19 +73,22 @@ func writer(conn net.Conn) {
 
 			if err != nil {
 				conn.Close()
-				slaves--
 				return
 			}
 		case <-stopClient:
 			log.Debug("Sending stop message to client %#v", conn.RemoteAddr())
-			msg, _ := json.Marshal(Stop{MType: 3})
+			msg, _ := json.Marshal(Stop{MType: STOP_TEST})
 			_, err := conn.Write([]byte(msg))
 
 			if err != nil {
 				conn.Close()
-				slaves--
 				return
 			}
+		case cn := <-exitFunc: //Client closed connection hence stop stale writer goroutine
+			if cn == conn {
+				return
+			}
+			exitFunc <- cn
 		}
 	}
 }

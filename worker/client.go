@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -28,15 +30,43 @@ type Response struct {
 
 var quit chan bool
 
+func getFireSignalsChannel() chan os.Signal {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c,
+		syscall.SIGTERM, // "the normal way to politely ask a program to terminate"
+		syscall.SIGINT,  // Ctrl+C
+		syscall.SIGQUIT, // Ctrl-\
+		syscall.SIGKILL, // "always fatal", "SIGKILL and SIGSTOP may not be caught by a program"
+		syscall.SIGHUP,  // "terminal is disconnected"
+	)
+	return c
+}
+
+func killProcess(conn net.Conn) {
+	exitChan := getFireSignalsChannel()
+	<-exitChan
+	fmt.Println("Interrupted. Exiting..")
+	sendExitMsg(conn)
+	os.Exit(1)
+}
+
 func main() {
-	conn, err := net.Dial("tcp", "127.0.0.1:8082")
+	args := os.Args[1:]
+
+	conn, err := net.Dial("tcp", args[0])
 
 	if err != nil {
-		fmt.Print(err.Error())
+		fmt.Println(err.Error())
+		os.Exit(1)
+	} else if len(args) == 0 {
+		fmt.Println("Provide server host:<port>")
 		os.Exit(1)
 	}
 
-	fmt.Println("Connected to 127.0.0.1:8082")
+	fmt.Printf("Connected to %v\n", args[0])
+
+	go killProcess(conn)
+
 	for {
 		d := json.NewDecoder(conn)
 		msg := &Message{}
@@ -44,6 +74,7 @@ func main() {
 
 		if err != nil {
 			fmt.Print(err.Error())
+			sendExitMsg(conn)
 			conn.Close()
 			break
 		}
@@ -71,6 +102,13 @@ func main() {
 	}
 }
 
+func sendExitMsg(conn net.Conn) {
+	fmt.Println("Exiting. Sending exit message to server..")
+	resp := Response{MType: 1, Content: "dead"}
+	m, _ := json.Marshal(resp)
+	conn.Write([]byte(m))
+}
+
 func meteorBurst(url string, payload string, method string, headers []string, conn net.Conn) {
 	client := &http.Client{}
 
@@ -92,5 +130,7 @@ func meteorBurst(url string, payload string, method string, headers []string, co
 		resp := Response{MType: 2, Content: strconv.Itoa(responseTime)}
 		m, _ := json.Marshal(resp)
 		conn.Write([]byte(m))
+	} else {
+		fmt.Println(err.Error())
 	}
 }
