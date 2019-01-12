@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -110,13 +109,7 @@ func (c *HomeController) Post() {
 					}()
 				}
 			} else {
-				usersPerSlave := users / slaves
-				request := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
-				r, _ := json.Marshal(request)
-				log.Debug("Sending request %#v", string(r))
-				for i := 0; i < slaves; i++ {
-					write <- request
-				}
+				c.runOnSlaves(r, headerList)
 			}
 		} else {
 			flash.Error("%#v", err.Error())
@@ -193,4 +186,28 @@ func (c *HomeController) Join() {
 	Join(ws)
 	c.Data["success"] = true
 	c.ServeJSON()
+}
+
+func (c *HomeController) runOnSlaves(r *RequestDetails, headerList []string) {
+	usersPerSlave := users / slaves
+	var diff = false
+	var usersForLastSlave int
+
+	if usersPerSlave*slaves < users {
+		diff = true
+		d := users - (usersPerSlave * slaves)
+		usersForLastSlave = usersPerSlave + d
+	}
+
+	request := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
+
+	for i := 0; i < slaves; i++ {
+		if i+1 == slaves && diff == true {
+			req := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersForLastSlave}
+			write <- req
+			break
+		}
+
+		write <- request
+	}
 }
