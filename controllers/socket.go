@@ -25,6 +25,7 @@ const (
 	P99     = 5
 	P50     = 6
 	RPS     = 7
+	SOCKET  = 8
 )
 
 // Event data structure that is sent to the websocket

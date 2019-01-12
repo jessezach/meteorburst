@@ -133,5 +133,5 @@
     </div>
 {{ end }}
 {{ define "js" }}
-    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/burst.js"></script>
 {{ end }}

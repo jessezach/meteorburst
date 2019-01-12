@@ -18,6 +18,15 @@ type HomeController struct {
 	beego.Controller
 }
 
+type Request struct {
+	MType   int
+	URL     string
+	Headers []string
+	Method  string
+	Payload string
+	Users   int
+}
+
 // RequestDetails form details
 type RequestDetails struct {
 	URL     string `form:"url" valid:"Required"`
@@ -40,6 +49,7 @@ func (c *HomeController) Get() {
 		c.Data["error"] = true
 	}
 
+	c.Data["slaves"] = slaves
 	if !running {
 		c.TplName = "home.tpl"
 	} else {
@@ -83,19 +93,23 @@ func (c *HomeController) Post() {
 			users = r.Users
 			setStartTime(time.Now().UnixNano() / int64(time.Millisecond))
 
-			for i := 0; i < r.Users; i++ {
-				log.Debug("Starting user %#v", i+1)
-				go func() {
-					for {
-						select {
-						case <-quit:
-							log.Debug("Returning from go routine")
-							return
-						default:
-							c.meteorBurst(r.URL, r.Method, r.Payload, headerList)
+			if slaves == 0 {
+				for i := 0; i < r.Users; i++ {
+					log.Debug("Starting user %#v", i+1)
+					go func() {
+						for {
+							select {
+							case <-quit:
+								log.Debug("Returning from go routine")
+								return
+							default:
+								c.meteorBurst(r.URL, r.Method, r.Payload, headerList)
+							}
 						}
-					}
-				}()
+					}()
+				}
+			} else {
+				c.runOnSlaves(r, headerList)
 			}
 		} else {
 			flash.Error("%#v", err.Error())
@@ -110,6 +124,9 @@ func (c *HomeController) Post() {
 			running = false
 			users = 0
 			setStartTime(0)
+			for i := 0; i < slaves; i++ {
+				stopClient <- "stop"
+			}
 		}
 		c.Data["json"] = "{'stopped': true}"
 		c.ServeJSON()
@@ -135,7 +152,7 @@ func (c *HomeController) meteorBurst(url string, method string, payload string, 
 		if len(headers) > 0 {
 			for i := 0; i < len(headers); i++ {
 				header := strings.Split(headers[i], ":")
-				req.Header.Add(header[0], header[1])
+				req.Header.Add(strings.TrimSpace(header[0]), strings.TrimSpace(header[1]))
 			}
 		}
 
@@ -169,4 +186,28 @@ func (c *HomeController) Join() {
 	Join(ws)
 	c.Data["success"] = true
 	c.ServeJSON()
+}
+
+func (c *HomeController) runOnSlaves(r *RequestDetails, headerList []string) {
+	usersPerSlave := users / slaves
+	var diff = false
+	var usersForLastSlave int
+
+	if usersPerSlave*slaves < users {
+		diff = true
+		d := users - (usersPerSlave * slaves)
+		usersForLastSlave = usersPerSlave + d
+	}
+
+	request := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
+
+	for i := 0; i < slaves; i++ {
+		if i+1 == slaves && diff == true {
+			req := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersForLastSlave}
+			write <- req
+			break
+		}
+
+		write <- request
+	}
 }

@@ -13,6 +13,11 @@
     <body id="page-top">
         <nav class="navbar navbar-expand navbar-dark bg-dark static-top">
             <a class="navbar-brand mr-1" href="/">Meteor Burst</a>
+            <ul class="navbar-nav ml-auto ml-md-0" style="position:relative;left:1000px;">
+                <li class="nav-item no-arrow mx-1">
+                    <a class="nav-link active" href="#">Slaves: <span id="slaves">{{ .slaves }}</span></a>
+                </li>
+            </ul>
         </nav>
         <div id="content-wrapper" class="container" style="position:relative;top:30px;">
             {{ block "content" . }}{{ end }}
