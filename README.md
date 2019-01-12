@@ -44,7 +44,8 @@ Also make sure you have `$GOPATH/bin` add to path.
 2019/01/06 00:31:24 INFO     ▶ 0002 Initializing watcher...
 ```
 
-App should be running on `http://localhost:8080/`
+App should be running on `http://localhost:8080/`</br>
+TCP server should be running on `http://0.0.0.0:8082/`
 
 ## How to use
 - Navigate to `http://localhost:8080/`
@@ -59,6 +60,14 @@ App should be running on `http://localhost:8080/`
 - Press stop button whenever you want to stop the tests.
 ![Alt text](/readme-images/stop.png "Home screen")
 
+## Distributed Load testing
+Incase you want to generate a high load. You can install meteor client and run them on different machines.Follow the steps below</br>
+- Install meteor `go get -u github.com/jz-jess/meteor`</br>
+- Run `meteor <server-ip>:<port>`, Ex: `meteor 0.0.0.0:8082`</br>
+You can see the number of slaves connected in the UI. The tests will automatically run on slaves.</br>
+![Alt text](/readme-images/slaves.png "Slaves")
+
+Note: Clients will get disconnected when app server is closed.
 ## Note
 Please star the repository if you find this useful.</br>
 For any queries or issues, raise an issue or email me at iamjess988@gmail.com
