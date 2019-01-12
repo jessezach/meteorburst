@@ -18,6 +18,7 @@ type HomeController struct {
 	beego.Controller
 }
 
+// Request struct for tcp message
 type Request struct {
 	MType   int
 	URL     string

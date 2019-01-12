@@ -20,6 +20,7 @@ type Resp struct {
 	Content string
 }
 
+// Constants for tcp messages
 const (
 	CLOSED_CONNECTION = 1
 	MSG               = 2
