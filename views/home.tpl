@@ -55,3 +55,6 @@
         <button type="submit" class="btn btn-primary">Start</button>
     </form>
 {{ end }}
+{{ define "js" }}
+    <script src="/static/js/home.js"></script>
+{{ end }}

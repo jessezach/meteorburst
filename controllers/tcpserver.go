@@ -51,6 +51,7 @@ func reader(conn net.Conn) {
 			exitFunc <- conn // Tells corresponding writer goroutine to exit
 			conn.Close()
 			slaves--
+			publish <- newEvent(SOCKET, strconv.Itoa(slaves))
 			log.Debug("Connection closed by a client. Total slaves %v", slaves)
 			return
 		}
@@ -112,6 +113,8 @@ func server() {
 		}
 
 		slaves++
+		publish <- newEvent(SOCKET, strconv.Itoa(slaves))
+
 		log.Debug("Received connection from client %#v", conn.RemoteAddr())
 		log.Debug("Total slaves %#v", slaves)
 		go reader(conn)

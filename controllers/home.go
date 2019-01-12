@@ -50,6 +50,7 @@ func (c *HomeController) Get() {
 		c.Data["error"] = true
 	}
 
+	c.Data["slaves"] = slaves
 	if !running {
 		c.TplName = "home.tpl"
 	} else {
