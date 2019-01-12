@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"container/list"
 	"encoding/json"
 	"io"
 	"net"
@@ -20,6 +21,11 @@ type Resp struct {
 	Content string
 }
 
+// Writer contains a tcp socket connection object
+type Writer struct {
+	Conn net.Conn
+}
+
 // Constants for tcp messages
 const (
 	CLOSED_CONNECTION = 1
@@ -27,10 +33,13 @@ const (
 	STOP_TEST         = 3
 )
 
-var slaves = 0
-var write = make(chan *Request)
-var stopClient = make(chan string)
-var exitFunc = make(chan net.Conn)
+var (
+	slaves       = 0
+	write        = make(chan *Request)
+	stopClient   = make(chan string)
+	removeWriter = make(chan net.Conn)
+	writers      = list.New()
+)
 
 func reader(conn net.Conn) {
 	log := logs.NewLogger()
@@ -49,10 +58,9 @@ func reader(conn net.Conn) {
 
 		// Client closed connection
 		if r.MType == CLOSED_CONNECTION {
-			exitFunc <- conn // Tells corresponding writer goroutine to exit
-			conn.Close()
+			removeWriter <- conn // Removes connection from writer list
 			slaves--
-			publish <- newEvent(SOCKET, strconv.Itoa(slaves))
+			publish <- newEvent(SLAVE, strconv.Itoa(slaves))
 			log.Debug("Connection closed by a client. Total slaves %v", slaves)
 			return
 		}
@@ -61,7 +69,7 @@ func reader(conn net.Conn) {
 	}
 }
 
-func writer(conn net.Conn) {
+func writer() {
 	log := logs.NewLogger()
 	log.SetLogger(logs.AdapterConsole)
 
@@ -71,26 +79,41 @@ func writer(conn net.Conn) {
 		case c := <-write:
 			msg, _ := json.Marshal(c)
 			log.Debug("Sending msg to client %#v", string(msg))
-			_, err := conn.Write([]byte(msg))
 
-			if err != nil {
-				conn.Close()
-				return
+			for wr := writers.Front(); wr != nil; wr = wr.Next() {
+				if c.MType == MSG && users%slaves != 0 && wr.Next() == nil {
+					diff := (users - c.Users*slaves)
+					c.Users += diff
+					msg, _ = json.Marshal(c)
+					log.Debug("Sending msg to client %#v", string(msg))
+				}
+				_, err := wr.Value.(Writer).Conn.Write([]byte(msg))
+
+				if err != nil {
+					removeWriter <- wr.Value.(Writer).Conn
+				}
 			}
 		case <-stopClient:
-			log.Debug("Sending stop message to client %#v", conn.RemoteAddr())
+			log.Debug("Sending stop message to all clients")
 			msg, _ := json.Marshal(Stop{MType: STOP_TEST})
-			_, err := conn.Write([]byte(msg))
 
-			if err != nil {
-				conn.Close()
-				return
+			for wr := writers.Front(); wr != nil; wr = wr.Next() {
+				_, err := wr.Value.(Writer).Conn.Write([]byte(msg))
+
+				if err != nil {
+					removeWriter <- wr.Value.(Writer).Conn
+				}
 			}
-		case cn := <-exitFunc: //Client closed connection hence stop stale writer goroutine
-			if cn == conn {
-				return
+		case cn := <-removeWriter:
+			//Client closed connection hence stop stale writer connection
+
+			for wr := writers.Front(); wr != nil; wr = wr.Next() {
+				if wr.Value.(Writer).Conn == cn {
+					writers.Remove(wr)
+					wr.Value.(Writer).Conn.Close()
+					log.Debug("Removed connection from writers")
+				}
 			}
-			exitFunc <- cn
 		}
 	}
 }
@@ -114,15 +137,17 @@ func server() {
 		}
 
 		slaves++
-		publish <- newEvent(SOCKET, strconv.Itoa(slaves))
+		publish <- newEvent(SLAVE, strconv.Itoa(slaves))
 
-		log.Debug("Received connection from client %#v", conn.RemoteAddr())
+		log.Debug("Received connection from client %#v", conn.RemoteAddr().String())
 		log.Debug("Total slaves %#v", slaves)
 		go reader(conn)
-		go writer(conn)
+
+		writers.PushBack(Writer{Conn: conn})
 	}
 }
 
 func init() {
 	go server()
+	go writer()
 }

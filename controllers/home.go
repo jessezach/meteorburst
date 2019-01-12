@@ -125,9 +125,7 @@ func (c *HomeController) Post() {
 			running = false
 			users = 0
 			setStartTime(0)
-			for i := 0; i < slaves; i++ {
-				stopClient <- "stop"
-			}
+			stopClient <- "stop"
 		}
 		c.Data["json"] = "{'stopped': true}"
 		c.ServeJSON()
@@ -191,24 +189,26 @@ func (c *HomeController) Join() {
 
 func (c *HomeController) runOnSlaves(r *RequestDetails, headerList []string) {
 	usersPerSlave := users / slaves
-	var diff = false
-	var usersForLastSlave int
+	// var diff = false
+	// var usersForLastSlave int
 
-	if usersPerSlave*slaves < users {
-		diff = true
-		d := users - (usersPerSlave * slaves)
-		usersForLastSlave = usersPerSlave + d
-	}
+	// if usersPerSlave*slaves < users {
+	// 	diff = true
+	// 	d := users - (usersPerSlave * slaves)
+	// 	usersForLastSlave = usersPerSlave + d
+	// }
 
-	request := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
+	request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
+		Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
 
-	for i := 0; i < slaves; i++ {
-		if i+1 == slaves && diff == true {
-			req := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersForLastSlave}
-			write <- req
-			break
-		}
+	write <- request
+	// for i := 0; i < slaves; i++ {
+	// 	if i+1 == slaves && diff == true {
+	// 		req := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersForLastSlave}
+	// 		write <- req
+	// 		break
+	// 	}
 
-		write <- request
-	}
+	// 	write <- request
+	// }
 }

@@ -25,7 +25,7 @@ const (
 	P99     = 5
 	P50     = 6
 	RPS     = 7
-	SOCKET  = 8
+	SLAVE   = 8
 )
 
 // Event data structure that is sent to the websocket
@@ -94,12 +94,7 @@ func broadcastWebSocket(event Event) {
 	log := logs.NewLogger()
 	log.SetLogger(logs.AdapterConsole)
 
-	data, err := json.Marshal(event)
-
-	if err != nil {
-		log.Error("Fail to marshal event:", err)
-		return
-	}
+	data, _ := json.Marshal(event)
 
 	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 		// Immediately send event to WebSocket users.
