@@ -62,7 +62,7 @@ TCP server should be running on `http://0.0.0.0:8082/`
 
 ## Distributed Load testing
 Incase you want to generate a high load. You can install meteor client and run them on different machines.Follow the steps below</br>
-- Install meteor `go get -u github.com/jz-jess/meteor`</br>
+- Install meteor `go get github.com/jz-jess/meteor`</br>
 - Run `meteor <server-ip>:<port>`, Ex: `meteor 0.0.0.0:8082`</br>
 You can see the number of slaves connected in the UI. The tests will automatically run on slaves.</br>
 ![Alt text](/readme-images/slaves.png "Slaves")
