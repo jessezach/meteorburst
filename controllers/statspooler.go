@@ -10,6 +10,7 @@ var (
 	response      = make(chan int)
 	responses     = []int{}
 	totalRequests = 0
+	batchSize     = 0
 )
 
 func init() {
@@ -27,15 +28,15 @@ func poolStats() {
 			responses = append(responses, r)
 			length := len(responses)
 
-			if length%100 == 0 {
-				resp := getMean(responses)
+			if batchSize > 0 && length%batchSize == 0 {
+				resp := getMean(responses, length)
 				publish <- newEvent(MESSAGE, strconv.Itoa(resp))
 
 				diff := (time.Now().UnixNano() / int64(time.Millisecond)) - testStartTime
 				rps := rps(diff, length)
 				publish <- newEvent(RPS, strconv.Itoa((int(rps))))
 
-				totalRequests += 100
+				totalRequests += batchSize
 				publish <- newEvent(TOTAL, strconv.Itoa(totalRequests))
 
 				sort.Ints(responses)
@@ -52,34 +53,32 @@ func poolStats() {
 	}
 }
 
-func getMean(slice []int) int {
+func getMean(slice []int, length int) int {
 	sum := 0
 	for _, v := range slice {
 		sum += v
 	}
-	return sum / len(slice)
+	return sum / length
 }
 
 func calcP(slice []int, metricType int, length int) int {
-	var n int
+	var percent int
 
 	switch metricType {
 
 	case 90:
-		ten := (10 * length) / 100
-		idx := (length - ten) - 1
-		n = slice[idx]
+		percent = 10
 
 	case 99:
-		one := (1 * length) / 100
-		idx := (length - one) - 1
-		n = slice[idx]
+		percent = 1
 
 	case 50:
-		fifty := (50 * length) / 100
-		idx := (length - fifty) - 1
-		n = slice[idx]
+		percent = 50
 	}
+
+	topEnd := (percent * length) / 100
+	idx := (length - topEnd) - 1
+	n := slice[idx]
 	return n
 }
 

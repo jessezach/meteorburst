@@ -92,6 +92,7 @@ func (c *HomeController) Post() {
 
 			running = true
 			users = r.Users
+			batchSize = users * 10
 			setStartTime(time.Now().UnixNano() / int64(time.Millisecond))
 
 			if slaves == 0 {
@@ -126,6 +127,7 @@ func (c *HomeController) Post() {
 			users = 0
 			setStartTime(0)
 			stopClient <- "stop"
+			batchSize = 0
 		}
 		c.Data["json"] = "{'stopped': true}"
 		c.ServeJSON()
