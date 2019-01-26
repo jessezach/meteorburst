@@ -16,16 +16,6 @@ type HomeController struct {
 	beego.Controller
 }
 
-// Request struct for tcp message
-type Request struct {
-	MType   int
-	URL     string
-	Headers []string
-	Method  string
-	Payload string
-	Users   int
-}
-
 // RequestDetails form details
 type RequestDetails struct {
 	URL      string `form:"url" valid:"Required"`
@@ -34,6 +24,7 @@ type RequestDetails struct {
 	Payload  string `form:"payload"`
 	Users    int    `form:"users" valid:"Required"`
 	Duration int    `form:"duration"`
+	Format   string `form:"format"`
 }
 
 // Get request
@@ -116,8 +107,12 @@ func (c *HomeController) Post() {
 		}
 
 		if r.Duration > 0 {
-			timer = time.NewTimer(time.Second * time.Duration(r.Duration))
-			go timeKeeper(r.Duration)
+			if r.Format == "seconds" {
+				timer = time.NewTimer(time.Second * time.Duration(r.Duration))
+			} else if r.Format == "minutes" {
+				timer = time.NewTimer(time.Minute * time.Duration(r.Duration))
+			}
+			go timeKeeper(r.Duration, r.Format)
 		}
 
 		setStartTime(time.Now().UnixNano() / int64(time.Millisecond))

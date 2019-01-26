@@ -50,7 +50,7 @@ $(document).ready(function () {
             $('#slaves').text(data.Content);
             break;
         case 9: //STOPPED
-            $("#msg").text("Stopped after " + data.Content + " seconds.")
+            $("#msg").text(data.Content)
             $("#toast").show();
             break;
         }

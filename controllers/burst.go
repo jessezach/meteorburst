@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +19,16 @@ var (
 	users = 0
 	timer = time.NewTimer(time.Second)
 )
+
+// Request struct for tcp message
+type Request struct {
+	MType   int
+	URL     string
+	Headers []string
+	Method  string
+	Payload string
+	Users   int
+}
 
 // MeteorBurst makes a REST call to the provided endpoint
 func meteorBurst(url string, method string, payload string, headers []string) {
@@ -67,11 +77,12 @@ func stopEverything() {
 	batchSize = 0
 }
 
-func timeKeeper(d int) {
+func timeKeeper(d int, format string) {
 	select {
 	case <-timer.C:
 		if quit != nil {
-			publish <- newEvent(STOPPED, strconv.Itoa(d))
+			msg := fmt.Sprintf("Stopped after %d %s", d, format)
+			publish <- newEvent(STOPPED, msg)
 			time.Sleep(time.Millisecond * 1000)
 			stopEverything()
 		}

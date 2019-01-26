@@ -52,10 +52,14 @@
                 </div>
             </div>
         </div>
-        <div class="form-group">
-            <div class="form-row">
-                <div class="col-md-6">
-                    <label for="duration">Duration (seconds)</label>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="duration">Duration</label><br>
+                <div class="form-inline">
+                    <select name="format">
+                        <option value="seconds">Seconds</option>
+                        <option value="minutes">Minutes</option>
+                    </select>
                     <input type="text" name="duration" class="form-control" id="duration" placeholder="120">
                 </div>
             </div>
