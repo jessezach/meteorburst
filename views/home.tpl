@@ -52,6 +52,14 @@
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <div class="form-row">
+                <div class="col-md-6">
+                    <label for="duration">Duration (seconds)</label>
+                    <input type="text" name="duration" class="form-control" id="duration" placeholder="120">
+                </div>
+            </div>
+        </div>
         <button type="submit" class="btn btn-primary">Start</button>
     </form>
 {{ end }}

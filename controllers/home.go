@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"bytes"
 	"net/http"
 	"strings"
 	"time"
@@ -9,7 +8,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/validation"
-	mapset "github.com/deckarep/golang-set"
 	"github.com/gorilla/websocket"
 )
 
@@ -30,11 +28,12 @@ type Request struct {
 
 // RequestDetails form details
 type RequestDetails struct {
-	URL     string `form:"url" valid:"Required"`
-	Headers string `form:"headers"`
-	Method  string `form:"method" valid:"Required"`
-	Payload string `form:"payload"`
-	Users   int    `form:"users" valid:"Required"`
+	URL      string `form:"url" valid:"Required"`
+	Headers  string `form:"headers"`
+	Method   string `form:"method" valid:"Required"`
+	Payload  string `form:"payload"`
+	Users    int    `form:"users" valid:"Required"`
+	Duration int    `form:"duration"`
 }
 
 // Get request
@@ -93,7 +92,6 @@ func (c *HomeController) Post() {
 			running = true
 			users = r.Users
 			batchSize = users * 10
-			setStartTime(time.Now().UnixNano() / int64(time.Millisecond))
 
 			if slaves == 0 {
 				for i := 0; i < r.Users; i++ {
@@ -105,70 +103,34 @@ func (c *HomeController) Post() {
 								log.Debug("Returning from go routine")
 								return
 							default:
-								c.meteorBurst(r.URL, r.Method, r.Payload, headerList)
+								meteorBurst(r.URL, r.Method, r.Payload, headerList)
 							}
 						}
 					}()
 				}
 			} else {
-				c.runOnSlaves(r, headerList)
+				runOnSlaves(r, headerList)
 			}
 		} else {
 			flash.Error("%#v", err.Error())
 		}
+
+		if r.Duration > 0 {
+			timer = time.NewTimer(time.Second * time.Duration(r.Duration))
+			go timeKeeper(r.Duration)
+		}
+
+		setStartTime(time.Now().UnixNano() / int64(time.Millisecond))
 
 		flash.Store(&c.Controller)
 		c.Redirect("/", 302)
 
 	} else if command == "stop" {
 		if quit != nil {
-			close(quit)
-			running = false
-			users = 0
-			setStartTime(0)
-			stopClient <- "stop"
-			batchSize = 0
+			stopEverything()
 		}
 		c.Data["json"] = "{'stopped': true}"
 		c.ServeJSON()
-	}
-}
-
-// MeteorBurst makes a REST call to the provided endpoint
-func (c *HomeController) meteorBurst(url string, method string, payload string, headers []string) {
-	log := logs.NewLogger()
-	log.SetLogger(logs.AdapterConsole)
-
-	badResponses := mapset.NewSet()
-	badResponses.Add(500)
-	badResponses.Add(501)
-	badResponses.Add(502)
-	badResponses.Add(504)
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(payload)))
-
-	if err == nil {
-		if len(headers) > 0 {
-			for i := 0; i < len(headers); i++ {
-				header := strings.Split(headers[i], ":")
-				req.Header.Add(strings.TrimSpace(header[0]), strings.TrimSpace(header[1]))
-			}
-		}
-
-		startTime := time.Now().UnixNano() / int64(time.Millisecond)
-		_, err := client.Do(req)
-		endTime := time.Now().UnixNano() / int64(time.Millisecond)
-
-		responseTime := int(endTime - startTime)
-		response <- responseTime
-		if err != nil {
-			log.Debug(err.Error())
-		}
-	} else {
-		log.Debug(err.Error())
-		return
 	}
 }
 
@@ -187,30 +149,4 @@ func (c *HomeController) Join() {
 	Join(ws)
 	c.Data["success"] = true
 	c.ServeJSON()
-}
-
-func (c *HomeController) runOnSlaves(r *RequestDetails, headerList []string) {
-	usersPerSlave := users / slaves
-	// var diff = false
-	// var usersForLastSlave int
-
-	// if usersPerSlave*slaves < users {
-	// 	diff = true
-	// 	d := users - (usersPerSlave * slaves)
-	// 	usersForLastSlave = usersPerSlave + d
-	// }
-
-	request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
-		Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
-
-	write <- request
-	// for i := 0; i < slaves; i++ {
-	// 	if i+1 == slaves && diff == true {
-	// 		req := &Request{MType: MSG, URL: r.URL, Headers: headerList, Method: r.Method, Payload: r.Payload, Users: usersForLastSlave}
-	// 		write <- req
-	// 		break
-	// 	}
-
-	// 	write <- request
-	// }
 }

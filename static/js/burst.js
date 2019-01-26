@@ -49,6 +49,10 @@ $(document).ready(function () {
         case 8: //SLAVES
             $('#slaves').text(data.Content);
             break;
+        case 9: //STOPPED
+            $("#msg").text("Stopped after " + data.Content + " seconds.")
+            $("#toast").show();
+            break;
         }
     };
 
