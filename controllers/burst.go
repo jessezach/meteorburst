@@ -80,7 +80,7 @@ func stopEverything() {
 func timeKeeper(d int, format string) {
 	select {
 	case <-timer.C:
-		if quit != nil {
+		if quit != nil && running {
 			msg := fmt.Sprintf("Stopped after %d %s", d, format)
 			publish <- newEvent(STOPPED, msg)
 			time.Sleep(time.Millisecond * 1000)

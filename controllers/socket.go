@@ -73,7 +73,7 @@ func broadcaster() {
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 				if sub.Value.(Subscriber).Conn == unsub {
 					subscribers.Remove(sub)
-					// Clone connection.
+					// Close connection.
 					ws := sub.Value.(Subscriber).Conn
 					if ws != nil {
 						ws.Close()
