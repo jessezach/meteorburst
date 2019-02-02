@@ -2,7 +2,7 @@
 {{ define "content" }}
     {{ if .error }}
     <div class="alert alert-danger" role="alert">
-        {{ .error }}
+        {{ .flash.error }}
     </div>
     {{ end }}
     <form action="/?command=start" method="post">
@@ -57,10 +57,27 @@
                 <label for="duration">Duration</label><br>
                 <div class="form-inline">
                     <select name="format">
+                        <option value="none">None</option>
                         <option value="seconds">Seconds</option>
                         <option value="minutes">Minutes</option>
                     </select>
                     <input type="text" name="duration" class="form-control" id="duration" placeholder="120">
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <div class="form-inline">
+                    <label for="ramp">Ramp up</label>
+                    <select name="ramp-type" id="ramp-type" style="position:relative;left:10px;">
+                        <option value="none">None</option>
+                        <option value="linear">Linear</option>
+                        <option value="step">Step</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div id="ramp-field">
+                    </div>
                 </div>
             </div>
         </div>

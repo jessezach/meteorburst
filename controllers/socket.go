@@ -23,6 +23,8 @@ const (
 	RPS     = 7
 	SLAVE   = 8
 	STOPPED = 9
+	USERS   = 10
+	ERROR   = 11
 )
 
 // Event data structure that is sent to the websocket

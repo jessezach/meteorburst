@@ -25,6 +25,9 @@ type RequestDetails struct {
 	Users    int    `form:"users" valid:"Required"`
 	Duration int    `form:"duration"`
 	Format   string `form:"format"`
+	RampType string `form:"ramp-type"`
+	RampTime int    `form:"ramp"`
+	RampStep string `form:"step"`
 }
 
 // Get request
@@ -80,25 +83,8 @@ func (c *HomeController) Post() {
 				headerList = strings.Split(r.Headers, ";")
 			}
 
-			running = true
-			users = r.Users
-			batchSize = users * 10
-
 			if slaves == 0 {
-				for i := 0; i < r.Users; i++ {
-					log.Debug("Starting user %#v", i+1)
-					go func() {
-						for {
-							select {
-							case <-quit:
-								log.Debug("Returning from go routine")
-								return
-							default:
-								meteorBurst(r.URL, r.Method, r.Payload, headerList)
-							}
-						}
-					}()
-				}
+				runLocal(r, headerList)
 			} else {
 				runOnSlaves(r, headerList)
 			}
@@ -106,7 +92,12 @@ func (c *HomeController) Post() {
 			flash.Error("%#v", err.Error())
 		}
 
-		if r.Duration > 0 {
+		running = true
+		users = r.Users
+		batchSize = users * 10
+		go updateUsers()
+
+		if r.Duration > 0 && r.Format != "none" {
 			if r.Format == "seconds" {
 				timer = time.NewTimer(time.Second * time.Duration(r.Duration))
 			} else if r.Format == "minutes" {

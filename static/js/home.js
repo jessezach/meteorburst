@@ -16,4 +16,13 @@ $(document).ready(function () {
             break;
         }
     };
+
+    $('#ramp-type').change(function(){
+        $('#ramp-field').children().remove();
+        if( $(this).val() == 'linear'){
+            $('#ramp-field').append('<input id="ramp" name="ramp" class="form-control" placeholder="seconds" type="text" style="position:relative;top:10px;"/>');
+        }else {
+            $('#ramp-field').append('<textarea class="form-control" id="step" name="step" rows="6" style="position:relative;top:10px;"></textarea>')
+        }
+    });
 });

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,8 +17,9 @@ var running bool
 var testStartTime int64
 
 var (
-	users = 0
-	timer = time.NewTimer(time.Second)
+	users               = 0
+	timer               = time.NewTimer(time.Second)
+	totalUsersGenerated = 0
 )
 
 // Request struct for tcp message
@@ -75,6 +77,7 @@ func stopEverything() {
 	setStartTime(0)
 	stopClient <- "stop"
 	batchSize = 0
+	totalUsersGenerated = 0
 }
 
 func timeKeeper(d int, format string) {
@@ -99,4 +102,137 @@ func runOnSlaves(r *RequestDetails, headerList []string) {
 		Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
 
 	write <- request
+}
+
+func runLocal(r *RequestDetails, headerList []string) {
+	switch r.RampType {
+	case "linear":
+		go rampUpLinear(r, headerList)
+	case "step":
+		go rampUpInSteps(r, headerList)
+	}
+}
+
+func rampUpRegular(r *RequestDetails, headerList []string) {
+	log := logs.NewLogger()
+	log.SetLogger(logs.AdapterConsole)
+
+	for i := 0; i < r.Users; i++ {
+		log.Debug("Starting user %#v", i+1)
+		go func() {
+			for {
+				select {
+				case <-quit:
+					log.Debug("Returning from go routine")
+					return
+				default:
+					meteorBurst(r.URL, r.Method, r.Payload, headerList)
+				}
+			}
+		}()
+		totalUsersGenerated++
+	}
+	return
+}
+
+func rampUpLinear(r *RequestDetails, headerList []string) {
+	log := logs.NewLogger()
+	log.SetLogger(logs.AdapterConsole)
+
+	timePerUser := float64(r.RampTime) / float64(r.Users)
+
+	for i := 0; i < r.Users; i++ {
+		log.Debug("Starting user %#v", i+1)
+		go func() {
+			for {
+				select {
+				case <-quit:
+					log.Debug("Returning from go routine")
+					return
+				default:
+					meteorBurst(r.URL, r.Method, r.Payload, headerList)
+				}
+			}
+		}()
+		totalUsersGenerated++
+		time.Sleep(time.Second * time.Duration(timePerUser))
+	}
+	return
+}
+
+func rampUpInSteps(r *RequestDetails, headerList []string) {
+	log := logs.NewLogger()
+	log.SetLogger(logs.AdapterConsole)
+
+	steps := strings.Split(r.RampStep, "\n")
+	timeUnit := strings.ToLower(strings.Split(steps[0], ":")[1])
+	unit := strings.TrimSpace(timeUnit)
+	u := strings.TrimRight(unit, "\n")
+
+	units := []string{"mins", "minutes", "minute", "seconds", "second", "sec"}
+
+	if !contains(units, u) {
+		publish <- newEvent(ERROR, "Bad Ramp up format")
+		stopEverything()
+		return
+	}
+
+	for _, step := range steps[1:] {
+		stepList := strings.Split(step, ":")
+		log.Debug(stepList[0])
+		log.Debug(stepList[1])
+
+		userCount, _ := strconv.Atoi(strings.TrimSpace(stepList[0]))
+		d := strings.TrimSpace(stepList[1])
+		dur, _ := strconv.Atoi(strings.TrimRight(d, "\n"))
+
+		for i := 0; i < userCount; i++ {
+			go func() {
+				for {
+					select {
+					case <-quit:
+						log.Debug("Returning from go routine")
+						return
+					default:
+						meteorBurst(r.URL, r.Method, r.Payload, headerList)
+					}
+				}
+			}()
+			totalUsersGenerated++
+		}
+		log.Debug(strconv.Itoa(totalUsersGenerated))
+		log.Debug("Going to sleep")
+		log.Debug(strconv.Itoa(dur))
+
+		if u == "seconds" || u == "second" || u == "sec" {
+			log.Debug("Sleeping in seconds")
+			time.Sleep(time.Second * time.Duration(dur))
+		} else {
+			log.Debug("Sleeping in minutes")
+			time.Sleep(time.Minute * time.Duration(dur))
+		}
+		log.Debug("Awake now...")
+	}
+	return
+}
+
+func updateUsers() {
+	for {
+		select {
+		case <-quit:
+			return
+		default:
+			publish <- newEvent(USERS, strconv.Itoa(totalUsersGenerated))
+			time.Sleep(time.Second * 1)
+		}
+	}
+}
+
+func contains(arr []string, unit string) bool {
+	for _, value := range arr {
+		if value == strings.TrimRight(unit, "\n") {
+			return true
+		}
+	}
+	return false
 }
