@@ -30,6 +30,7 @@ type Request struct {
 	Method  string
 	Payload string
 	Users   int
+	Slaves  int
 }
 
 // MeteorBurst makes a REST call to the provided endpoint
@@ -96,20 +97,29 @@ func timeKeeper(d int, format string) {
 }
 
 func runOnSlaves(r *RequestDetails, headerList []string) {
-	usersPerSlave := users / slaves
+	var usersPerSlave int
+	var request *Request
 
-	request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
-		Method: r.Method, Payload: r.Payload, Users: usersPerSlave}
-
+	if users < slaves {
+		usersPerSlave = 1
+		request = &Request{MType: MSG, URL: r.URL, Headers: headerList,
+			Method: r.Method, Payload: r.Payload, Users: usersPerSlave, Slaves: users}
+	} else {
+		usersPerSlave = users / slaves
+		request = &Request{MType: MSG, URL: r.URL, Headers: headerList,
+			Method: r.Method, Payload: r.Payload, Users: usersPerSlave, Slaves: 0}
+	}
 	write <- request
 }
 
-func runLocal(r *RequestDetails, headerList []string) {
+func runLocal(r *RequestDetails, headerList []string, usrs []int, dur []int, units []string) {
 	switch r.RampType {
 	case "linear":
 		go rampUpLinear(r, headerList)
 	case "step":
-		go rampUpInSteps(r, headerList)
+		go rampUpInSteps(r, headerList, usrs, dur, units)
+	default:
+		go rampUpRegular(r, headerList)
 	}
 }
 
@@ -140,9 +150,9 @@ func rampUpLinear(r *RequestDetails, headerList []string) {
 	log.SetLogger(logs.AdapterConsole)
 
 	timePerUser := float64(r.RampTime) / float64(r.Users)
+	millis := timePerUser * 1000
 
 	for i := 0; i < r.Users; i++ {
-		log.Debug("Starting user %#v", i+1)
 		go func() {
 			for {
 				select {
@@ -155,36 +165,19 @@ func rampUpLinear(r *RequestDetails, headerList []string) {
 			}
 		}()
 		totalUsersGenerated++
-		time.Sleep(time.Second * time.Duration(timePerUser))
+		time.Sleep(time.Millisecond * time.Duration(millis))
 	}
 	return
 }
 
-func rampUpInSteps(r *RequestDetails, headerList []string) {
+func rampUpInSteps(r *RequestDetails, headerList []string, usrs []int, dur []int, units []string) {
 	log := logs.NewLogger()
 	log.SetLogger(logs.AdapterConsole)
 
-	steps := strings.Split(r.RampStep, "\n")
-	timeUnit := strings.ToLower(strings.Split(steps[0], ":")[1])
-	unit := strings.TrimSpace(timeUnit)
-	u := strings.TrimRight(unit, "\n")
-
-	units := []string{"mins", "minutes", "minute", "seconds", "second", "sec"}
-
-	if !contains(units, u) {
-		publish <- newEvent(ERROR, "Bad Ramp up format")
-		stopEverything()
-		return
-	}
-
-	for _, step := range steps[1:] {
-		stepList := strings.Split(step, ":")
-		log.Debug(stepList[0])
-		log.Debug(stepList[1])
-
-		userCount, _ := strconv.Atoi(strings.TrimSpace(stepList[0]))
-		d := strings.TrimSpace(stepList[1])
-		dur, _ := strconv.Atoi(strings.TrimRight(d, "\n"))
+	for i := 0; i < len(usrs); i++ {
+		userCount := usrs[i]
+		duration := dur[i]
+		unit := units[i]
 
 		for i := 0; i < userCount; i++ {
 			go func() {
@@ -200,16 +193,12 @@ func rampUpInSteps(r *RequestDetails, headerList []string) {
 			}()
 			totalUsersGenerated++
 		}
-		log.Debug(strconv.Itoa(totalUsersGenerated))
-		log.Debug("Going to sleep")
-		log.Debug(strconv.Itoa(dur))
 
-		if u == "seconds" || u == "second" || u == "sec" {
-			log.Debug("Sleeping in seconds")
-			time.Sleep(time.Second * time.Duration(dur))
+		log.Debug("Going to sleep")
+		if unit == "seconds" {
+			time.Sleep(time.Second * time.Duration(duration))
 		} else {
-			log.Debug("Sleeping in minutes")
-			time.Sleep(time.Minute * time.Duration(dur))
+			time.Sleep(time.Minute * time.Duration(duration))
 		}
 		log.Debug("Awake now...")
 	}
@@ -226,13 +215,4 @@ func updateUsers() {
 			time.Sleep(time.Second * 1)
 		}
 	}
-}
-
-func contains(arr []string, unit string) bool {
-	for _, value := range arr {
-		if value == strings.TrimRight(unit, "\n") {
-			return true
-		}
-	}
-	return false
 }

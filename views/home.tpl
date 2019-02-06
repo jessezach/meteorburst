@@ -48,20 +48,23 @@
             <div class="form-row">
                 <div class="col-md-6">
                     <label for="users">Users</label>
-                    <input type="text" name="users" class="form-control" id="users" placeholder="50" required="required">
+                    <input type="number" name="users" class="form-control" id="users" placeholder="50" required="required">
                 </div>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="duration">Duration</label><br>
                 <div class="form-inline">
-                    <select name="format">
+                    <label for="duration">Duration</label><br>
+                    <select name="format" style="position:relative;left:10px;">
                         <option value="none">None</option>
                         <option value="seconds">Seconds</option>
                         <option value="minutes">Minutes</option>
                     </select>
-                    <input type="text" name="duration" class="form-control" id="duration" placeholder="120">
+                </div>
+                <div class="form-group">
+                    <div id="duration-field">
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,6 +81,7 @@
                 <div class="form-group">
                     <div id="ramp-field">
                     </div>
+                    <a id="add-row" href="javascript:void(0);" style="display:none">Add step</a>
                 </div>
             </div>
         </div>

@@ -75,6 +75,15 @@ func (c *HomeController) Post() {
 			c.Redirect("/", 302)
 		}
 
+		usrs := []int{}
+		c.Ctx.Input.Bind(&usrs, "usr")
+
+		dur := []int{}
+		c.Ctx.Input.Bind(&dur, "dur")
+
+		units := []string{}
+		c.Ctx.Input.Bind(&units, "unit")
+
 		if err == nil {
 			quit = make(chan bool)
 			var headerList []string
@@ -84,7 +93,7 @@ func (c *HomeController) Post() {
 			}
 
 			if slaves == 0 {
-				runLocal(r, headerList)
+				runLocal(r, headerList, usrs, dur, units)
 			} else {
 				runOnSlaves(r, headerList)
 			}
