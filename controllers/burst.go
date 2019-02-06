@@ -115,11 +115,11 @@ func runOnSlaves(r *RequestDetails, headerList []string) {
 func runLocal(r *RequestDetails, headerList []string, usrs []int, dur []int, units []string) {
 	switch r.RampType {
 	case "linear":
-		go rampUpLinear(r, headerList)
+		rampUpLinear(r, headerList)
 	case "step":
-		go rampUpInSteps(r, headerList, usrs, dur, units)
+		rampUpInSteps(r, headerList, usrs, dur, units)
 	default:
-		go rampUpRegular(r, headerList)
+		rampUpRegular(r, headerList)
 	}
 }
 
