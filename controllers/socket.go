@@ -8,10 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var quit chan bool
-var running bool
-var testStartTime int64
-
 // Subscriber obj
 type Subscriber struct {
 	Conn *websocket.Conn // Only for WebSocket users; otherwise nil.
@@ -26,6 +22,9 @@ const (
 	P50     = 6
 	RPS     = 7
 	SLAVE   = 8
+	STOPPED = 9
+	USERS   = 10
+	ERROR   = 11
 )
 
 // Event data structure that is sent to the websocket
@@ -61,7 +60,6 @@ var (
 	// Send events here to publish them.
 	publish     = make(chan Event)
 	subscribers = list.New()
-	users       = 0
 )
 
 func broadcaster() {
@@ -77,7 +75,7 @@ func broadcaster() {
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 				if sub.Value.(Subscriber).Conn == unsub {
 					subscribers.Remove(sub)
-					// Clone connection.
+					// Close connection.
 					ws := sub.Value.(Subscriber).Conn
 					if ws != nil {
 						ws.Close()

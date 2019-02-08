@@ -49,6 +49,29 @@ $(document).ready(function () {
         case 8: //SLAVES
             $('#slaves').text(data.Content);
             break;
+        case 9: //STOPPED
+            $("#msg").text(data.Content);
+            $("#toast").show();
+            break;
+        case 10: //USERS
+            d = new Date();
+            hrs = d.getHours().toString();
+            mins = d.getMinutes().toString();
+            secs = d.getSeconds().toString();
+            time = hrs + ":" + mins + ":" + secs;
+
+            uchart.data.labels.push(time);
+            uchart.data.datasets[0].data.push(data.Content);
+            if (parseInt(data.Content) > uchart.options.scales.yAxes[0].ticks.max) {
+                uchart.options.scales.yAxes[0].ticks.max = parseInt(data.Content);
+            }
+            uchart.update();
+            $("#users").text(data.Content);
+            break;
+        case 11: //ERROR
+            $("#error-msg").text(data.Content);
+            $("#error-toast").show();
+            break;
         }
     };
 
@@ -59,7 +82,7 @@ $(document).ready(function () {
         }});
     });
 
-    var ctx = document.getElementById("myAreaChart");
+    var ctx = document.getElementById("respChart");
     var chart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -96,6 +119,56 @@ $(document).ready(function () {
                     ticks: {
                         min: 0,
                         max: 50,
+                        maxTicksLimit: 5
+                    },
+                    gridLines: {
+                        color: "rgba(0, 0, 0, .125)",
+                    }
+                }],
+            },
+            legend: {
+            display: false
+            }
+        }
+    });
+
+    var uctx = document.getElementById("usersChart");
+    var uchart = new Chart(uctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+            label: "Users",
+            lineTension: 0.3,
+            backgroundColor: "rgba(2,117,216,0.2)",
+            borderColor: "rgba(2,117,216,1)",
+            pointRadius: 5,
+            pointBackgroundColor: "rgba(2,117,216,1)",
+            pointBorderColor: "rgba(255,255,255,0.8)",
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(2,117,216,1)",
+            pointHitRadius: 50,
+            pointBorderWidth: 2,
+            data: [],
+            }],
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    time: {
+                    unit: 'date'
+                    },
+                    gridLines: {
+                    display: false
+                    },
+                    ticks: {
+                    maxTicksLimit: 7
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        max: 5,
                         maxTicksLimit: 5
                     },
                     gridLines: {
