@@ -60,6 +60,19 @@ TCP server should be running on `http://0.0.0.0:8082/`
 - Press stop button whenever you want to stop the tests.
 ![Alt text](/readme-images/stop.png "Home screen")
 
+## Duration
+You can optionally add duration in minutes or seconds to a test. The tests will run for the specified duration and stop automatically after.</br>
+![Alt text](/readme-images/duration.png "Duration")
+
+## Ramp up
+Most tests require a pattern of of load generation. You would want to generate load in a linear manner or a step by step manner. Meteor Burst provides ramping up of users in linear fashion or using step. Linear Ramp up duration has to be provided in seconds.</br>
+![Alt text](/readme-images/linear.png "Linear")
+
+Step Ramp up can be done as follow:</br>
+- Select Step option in the Ramp up dropdown. A table should be displayed.</br>
+- Add number of users, duration and unit (seconds, minutes). You can add as many steps as required.</br>
+![Alt text](/readme-images/step.png "Step")
+
 ## Distributed Load testing
 Incase you want to generate a high load. You can install meteor client and run them on different machines.Follow the steps below</br>
 - Install meteor `go get github.com/jz-jess/meteor`</br>
