@@ -96,14 +96,42 @@ func timeKeeper(d int, format string) {
 	}
 }
 
-func runOnSlaves(r *RequestDetails, headerList []string) {
+func runOnSlaves(r *RequestDetails, headerList []string, usrs []int, dur []int, units []string) {
 	switch r.RampType {
 	case "linear":
 		rampUpLinearSlaves(r, headerList)
 	case "step":
-		// rampUpInSteps(r, headerList, usrs, dur, units)
+		rampUpStepSlaves(r, headerList, usrs, dur, units)
 	default:
 		rampUpRegular(r, headerList)
+	}
+}
+
+func rampUpStepSlaves(r *RequestDetails, headerList []string, usrs []int, dur []int, units []string) {
+	slaveNo := 1
+
+	for i := 0; i < len(usrs); i++ {
+		usr := usrs[i]
+		d := dur[i]
+		unit := units[i]
+
+		request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
+			Method: r.Method, Payload: r.Payload, Users: usr, Slave: slaveNo}
+
+		write <- request
+		totalUsersGenerated += usr
+
+		if unit == "seconds" {
+			time.Sleep(time.Second * time.Duration(d))
+		} else {
+			time.Sleep(time.Minute * time.Duration(d))
+		}
+
+		if slaveNo+1 > slaves {
+			slaveNo = 1
+		} else {
+			slaveNo++
+		}
 	}
 }
 

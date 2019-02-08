@@ -95,7 +95,7 @@ func (c *HomeController) Post() {
 			if slaves == 0 {
 				go runLocal(r, headerList, usrs, dur, units)
 			} else {
-				go runOnSlaves(r, headerList)
+				go runOnSlaves(r, headerList, usrs, dur, units)
 			}
 		} else {
 			flash.Error("%#v", err.Error())
