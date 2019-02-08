@@ -79,19 +79,19 @@ func writer() {
 		case c := <-write:
 			msg, _ := json.Marshal(c)
 			log.Debug("Sending msg to client %#v", string(msg))
+			s := c.Slave
+			counter := 1
 
 			for wr := writers.Front(); wr != nil; wr = wr.Next() {
-				if c.MType == MSG && users%slaves != 0 && wr.Next() == nil {
-					diff := (users - c.Users*slaves)
-					c.Users += diff
-					msg, _ = json.Marshal(c)
-					log.Debug("Sending msg to client %#v", string(msg))
-				}
-				_, err := wr.Value.(Writer).Conn.Write([]byte(msg))
+				if s == counter {
+					_, err := wr.Value.(Writer).Conn.Write([]byte(msg))
 
-				if err != nil {
-					removeWriter <- wr.Value.(Writer).Conn
+					if err != nil {
+						removeWriter <- wr.Value.(Writer).Conn
+					}
+					break
 				}
+				counter++
 			}
 		case <-stopClient:
 			log.Debug("Sending stop message to all clients")
@@ -106,7 +106,6 @@ func writer() {
 			}
 		case cn := <-removeWriter:
 			//Client closed connection hence stop stale writer connection
-
 			for wr := writers.Front(); wr != nil; wr = wr.Next() {
 				if wr.Value.(Writer).Conn == cn {
 					writers.Remove(wr)

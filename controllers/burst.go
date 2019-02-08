@@ -30,7 +30,7 @@ type Request struct {
 	Method  string
 	Payload string
 	Users   int
-	Slaves  int
+	Slave   int
 }
 
 // MeteorBurst makes a REST call to the provided endpoint
@@ -97,19 +97,60 @@ func timeKeeper(d int, format string) {
 }
 
 func runOnSlaves(r *RequestDetails, headerList []string) {
-	var usersPerSlave int
-	var request *Request
-
-	if users < slaves {
-		usersPerSlave = 1
-		request = &Request{MType: MSG, URL: r.URL, Headers: headerList,
-			Method: r.Method, Payload: r.Payload, Users: usersPerSlave, Slaves: users}
-	} else {
-		usersPerSlave = users / slaves
-		request = &Request{MType: MSG, URL: r.URL, Headers: headerList,
-			Method: r.Method, Payload: r.Payload, Users: usersPerSlave, Slaves: 0}
+	switch r.RampType {
+	case "linear":
+		rampUpLinearSlaves(r, headerList)
+	case "step":
+		// rampUpInSteps(r, headerList, usrs, dur, units)
+	default:
+		rampUpRegular(r, headerList)
 	}
-	write <- request
+}
+
+func rampUpLinearSlaves(r *RequestDetails, headerList []string) {
+	log := logs.NewLogger()
+	log.SetLogger(logs.AdapterConsole)
+
+	timePerUser := float64(r.RampTime) / float64(r.Users)
+	millis := timePerUser * 1000
+
+	if slaves > users {
+		usersPerSlave := 1
+
+		for i := 0; i < users; i++ {
+			request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
+				Method: r.Method, Payload: r.Payload, Users: usersPerSlave, Slave: i + 1}
+
+			write <- request
+			totalUsersGenerated++
+			time.Sleep(time.Millisecond * time.Duration(millis))
+		}
+	} else {
+		usersPerSlave := users / slaves
+
+		log.Debug("Slaves less than user")
+
+		for i := 1; i <= slaves; i++ {
+			if i == slaves {
+				if usersPerSlave*slaves < users {
+					diff := users - (usersPerSlave * slaves)
+					usersPerSlave = usersPerSlave + diff
+				}
+			}
+
+			for j := 1; j <= usersPerSlave; j++ {
+				request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
+					Method: r.Method, Payload: r.Payload, Users: 1, Slave: i}
+
+				write <- request
+				totalUsersGenerated++
+				log.Debug("Going to Sleep")
+				time.Sleep(time.Millisecond * time.Duration(millis))
+				log.Debug("Awake now..")
+			}
+			log.Debug("Next slave")
+		}
+	}
 }
 
 func runLocal(r *RequestDetails, headerList []string, usrs []int, dur []int, units []string) {
