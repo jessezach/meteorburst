@@ -103,7 +103,7 @@ func runOnSlaves(r *RequestDetails, headerList []string, usrs []int, dur []int, 
 	case "step":
 		rampUpStepSlaves(r, headerList, usrs, dur, units)
 	default:
-		rampUpRegular(r, headerList)
+		rampUpRegularSlaves(r, headerList)
 	}
 }
 
@@ -212,6 +212,25 @@ func rampUpRegular(r *RequestDetails, headerList []string) {
 		totalUsersGenerated++
 	}
 	return
+}
+
+func rampUpRegularSlaves(r *RequestDetails, headerList []string) {
+	usersPerSlave := users / slaves
+
+	for i := 1; i <= slaves; i++ {
+		if i == slaves {
+			if usersPerSlave*slaves < users {
+				diff := users - (usersPerSlave * slaves)
+				usersPerSlave += diff
+			}
+		}
+
+		request := &Request{MType: MSG, URL: r.URL, Headers: headerList,
+			Method: r.Method, Payload: r.Payload, Users: usersPerSlave, Slave: i}
+
+		write <- request
+		totalUsersGenerated += usersPerSlave
+	}
 }
 
 func rampUpLinear(r *RequestDetails, headerList []string) {
