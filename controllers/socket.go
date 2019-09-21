@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"container/list"
 	"encoding/json"
 
 	"github.com/astaxie/beego/logs"
@@ -13,28 +12,10 @@ type Subscriber struct {
 	Conn *websocket.Conn // Only for WebSocket users; otherwise nil.
 }
 
-// Constants for type of message
-const (
-	MESSAGE = 2
-	TOTAL   = 3
-	P90     = 4
-	P99     = 5
-	P50     = 6
-	RPS     = 7
-	SLAVE   = 8
-	STOPPED = 9
-	USERS   = 10
-	ERROR   = 11
-)
-
-// Event data structure that is sent to the websocket
+// Event object is sent to the websocket
 type Event struct {
 	Type    int
 	Content string
-}
-
-func setStartTime(time int64) {
-	testStartTime = time
 }
 
 // New event
@@ -52,15 +33,10 @@ func Leave(ws *websocket.Conn) {
 	unsubscribe <- ws
 }
 
-var (
-	// Channel for new join users.
-	subscribe = make(chan Subscriber, 10)
-	// Channel for exit users.
-	unsubscribe = make(chan *websocket.Conn, 10)
-	// Send events here to publish them.
-	publish     = make(chan Event)
-	subscribers = list.New()
-)
+// Send message to websocket
+func sendMessage(event Event) {
+	publish <- event
+}
 
 func broadcaster() {
 	for {
@@ -100,7 +76,7 @@ func broadcastWebSocket(event Event) {
 		if ws != nil {
 			if ws.WriteMessage(websocket.TextMessage, data) != nil {
 				// User disconnected.
-				unsubscribe <- ws
+				Leave(ws)
 			}
 		}
 	}

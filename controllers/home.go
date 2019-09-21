@@ -16,20 +16,6 @@ type HomeController struct {
 	beego.Controller
 }
 
-// RequestDetails form details
-type RequestDetails struct {
-	URL      string `form:"url" valid:"Required"`
-	Headers  string `form:"headers"`
-	Method   string `form:"method" valid:"Required"`
-	Payload  string `form:"payload"`
-	Users    int    `form:"users" valid:"Required"`
-	Duration int    `form:"duration"`
-	Format   string `form:"format"`
-	RampType string `form:"ramp-type"`
-	RampTime int    `form:"ramp"`
-	RampStep string `form:"step"`
-}
-
 // Get request
 func (c *HomeController) Get() {
 	log := logs.NewLogger()
@@ -92,11 +78,13 @@ func (c *HomeController) Post() {
 				headerList = strings.Split(r.Headers, ";")
 			}
 
+			var runner executor
 			if slaves == 0 {
-				go runLocal(r, headerList, usrs, dur, units)
+				runner = localRunner{r: r, headerList: headerList, usrs: usrs, dur: dur, units: units}
 			} else {
-				go runOnSlaves(r, headerList, usrs, dur, units)
+				runner = slaveRunner{r: r, headerList: headerList, usrs: usrs, dur: dur, units: units}
 			}
+			go runner.run()
 		} else {
 			flash.Error("%#v", err.Error())
 		}
