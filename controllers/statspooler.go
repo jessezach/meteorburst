@@ -6,13 +6,6 @@ import (
 	"time"
 )
 
-var (
-	response      = make(chan int)
-	responses     = []int{}
-	totalRequests = 0
-	batchSize     = 0
-)
-
 func init() {
 	go poolStats()
 }
@@ -30,24 +23,24 @@ func poolStats() {
 
 			if batchSize > 0 && length%batchSize == 0 {
 				resp := getMean(responses, length)
-				publish <- newEvent(MESSAGE, strconv.Itoa(resp))
+				sendMessage(newEvent(MESSAGE, strconv.Itoa(resp)))
 
 				diff := (time.Now().UnixNano() / int64(time.Millisecond)) - testStartTime
 				rps := rps(diff, length)
-				publish <- newEvent(RPS, strconv.Itoa((int(rps))))
+				sendMessage(newEvent(RPS, strconv.Itoa((int(rps)))))
 
 				totalRequests += batchSize
-				publish <- newEvent(TOTAL, strconv.Itoa(totalRequests))
+				sendMessage(newEvent(TOTAL, strconv.Itoa(totalRequests)))
 
 				sort.Ints(responses)
 				p90 := calcP(responses, 90, length)
-				publish <- newEvent(P90, strconv.Itoa(p90))
+				sendMessage(newEvent(P90, strconv.Itoa(p90)))
 
 				p99 := calcP(responses, 99, length)
-				publish <- newEvent(P99, strconv.Itoa(p99))
+				sendMessage(newEvent(P99, strconv.Itoa(p99)))
 
 				p50 := calcP(responses, 50, length)
-				publish <- newEvent(P50, strconv.Itoa(p50))
+				sendMessage(newEvent(P50, strconv.Itoa(p50)))
 			}
 		}
 	}

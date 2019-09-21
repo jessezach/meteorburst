@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"container/list"
 	"encoding/json"
 	"io"
 	"net"
@@ -26,21 +25,6 @@ type Writer struct {
 	Conn net.Conn
 }
 
-// Constants for tcp messages
-const (
-	CLOSED_CONNECTION = 1
-	MSG               = 2
-	STOP_TEST         = 3
-)
-
-var (
-	slaves       = 0
-	write        = make(chan *Request)
-	stopClient   = make(chan string)
-	removeWriter = make(chan net.Conn)
-	writers      = list.New()
-)
-
 func reader(conn net.Conn) {
 	log := logs.NewLogger()
 	log.SetLogger(logs.AdapterConsole)
@@ -60,7 +44,7 @@ func reader(conn net.Conn) {
 		if r.MType == CLOSED_CONNECTION {
 			removeWriter <- conn // Removes connection from writer list
 			slaves--
-			publish <- newEvent(SLAVE, strconv.Itoa(slaves))
+			sendMessage(newEvent(SLAVE, strconv.Itoa(slaves)))
 			log.Debug("Connection closed by a client. Total slaves %v", slaves)
 			return
 		}
@@ -136,7 +120,7 @@ func server() {
 		}
 
 		slaves++
-		publish <- newEvent(SLAVE, strconv.Itoa(slaves))
+		sendMessage(newEvent(SLAVE, strconv.Itoa(slaves)))
 
 		log.Debug("Received connection from client %#v", conn.RemoteAddr().String())
 		log.Debug("Total slaves %#v", slaves)
