@@ -80,7 +80,7 @@ Incase you want to generate a high load. You can install meteor client and run t
 You can see the number of slaves connected in the UI. The tests will automatically run on slaves.</br>
 ![Alt text](/readme-images/slaves.png "Slaves")
 
-Note: Clients will get disconnected when app server is closed.
+#### Important: When running meteor client, port should always be 8082 since tcp server runs on 8082. Clients will get disconnected when app server is closed.
 ## Note
 Please star the repository if you find this useful.</br>
 For any queries or issues, raise an issue or email me at iamjess988@gmail.com
