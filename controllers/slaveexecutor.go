@@ -117,3 +117,10 @@ func (sr slaveRunner) rampUpRegular() {
 		totalUsersGenerated += usersPerSlave
 	}
 }
+
+func (sr slaveRunner) execute(slave int, usersPerSlave int) {
+	request := &Request{MType: MSG, URL: sr.r.URL, Headers: sr.headerList,
+		Method: sr.r.Method, Payload: sr.r.Payload, Users: usersPerSlave, Slave: slave}
+
+	write <- request
+}

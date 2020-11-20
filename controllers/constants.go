@@ -55,8 +55,11 @@ var (
 	// Channel for exit users.
 	unsubscribe = make(chan *websocket.Conn, 10)
 	// Send events here to publish them.
-	publish     = make(chan Event)
-	subscribers = list.New()
+	publish              = make(chan Event)
+	subscribers          = list.New()
+	responseStats        = make(map[string]int)
+	responseStatsChannel = make(chan int)
+	httpErrorChannel     = make(chan string)
 )
 
 // Constants for type of message
@@ -74,6 +77,8 @@ const (
 	CLOSED_CONNECTION = 1
 	MSG               = 2
 	STOP_TEST         = 3
+	STATUS_CODE_STATS = 12
+	HTTP_ERROR        = 13
 )
 
 func setStartTime(time int64) {
