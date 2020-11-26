@@ -127,6 +127,18 @@
             <button type="button" id="stop" class="btn btn-danger">Stop</button>
         </div>
     </div>
+    <div class="container-sm" style="margin-top:30px;margin-bottom:100px">
+      <table class="table-sm table-bordered" style="max-width:500px;">
+        <thead>
+          <tr>
+            <th scope="col">Status Code</th>
+            <th scope="col">Count</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+      </table>
+    </div>
     <div class="card mb-3">
         <div class="card-header">
             <i class="fas fa-chart-area"></i>

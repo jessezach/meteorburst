@@ -72,6 +72,21 @@ $(document).ready(function () {
             $("#error-msg").text(data.Content);
             $("#error-toast").show();
             break;
+        case 12: //Status code stats
+            stats = JSON.parse(data.Content);
+            Object.keys( stats ).forEach( key => {
+              console.log(key);
+              newRow = `<tr id=${key}>
+                            <th scope="row">${key}</th>
+                            <td>${stats[key]}</td>
+                          </tr>`
+              if ($(`#${key}`).length ) {
+                var row = $("table tbody").find($(`#${key}`));
+                row.replaceWith(newRow);
+              } else {
+                $("#tbody").append(newRow);
+              };
+            }); 
         }
     };
 

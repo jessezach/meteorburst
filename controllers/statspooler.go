@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"sort"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ func poolStats() {
 		case <-quit:
 			responses = []int{}
 			totalRequests = 0
+			responseStats = make(map[string]int)
 
 		case r := <-response:
 			responses = append(responses, r)
@@ -42,7 +44,17 @@ func poolStats() {
 				p50 := calcP(responses, 50, length)
 				sendMessage(newEvent(P50, strconv.Itoa(p50)))
 			}
+		case statusCode := <-responseStatsChannel:
+			responseStats[strconv.Itoa(statusCode)]++
+
+			if batchSize > 0 && len(responses)%batchSize == 0 {
+				bytes, _ := json.Marshal(responseStats)
+				sendMessage(newEvent(STATUS_CODE_STATS, string(bytes)))
+			}
+		case httpError := <-httpErrorChannel:
+			sendMessage(newEvent(HTTP_ERROR, string(httpError)))
 		}
+
 	}
 }
 

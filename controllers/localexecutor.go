@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"bytes"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego/logs"
@@ -41,7 +44,7 @@ func (lc localRunner) rampUpLinear() {
 					log.Debug("Returning from go routine")
 					return
 				default:
-					execute(lc.r.URL, lc.r.Method, lc.r.Payload, lc.headerList)
+					lc.execute(0, 0)
 				}
 			}
 		}()
@@ -68,7 +71,7 @@ func (lc localRunner) rampUpSteps() {
 						log.Debug("Returning from go routine")
 						return
 					default:
-						execute(lc.r.URL, lc.r.Method, lc.r.Payload, lc.headerList)
+						lc.execute(0, 0)
 					}
 				}
 			}()
@@ -99,11 +102,53 @@ func (lc localRunner) rampUpRegular() {
 					log.Debug("Returning from go routine")
 					return
 				default:
-					execute(lc.r.URL, lc.r.Method, lc.r.Payload, lc.headerList)
+					lc.execute(0, 0)
 				}
 			}
 		}()
 		totalUsersGenerated++
 	}
 	return
+}
+
+// MeteorBurst makes a REST call to the provided endpoint
+func (lc localRunner) execute(slave int, usersPerSlave int) {
+	url := lc.r.URL
+	method := lc.r.Method
+	payload := lc.r.Payload
+	headers := lc.headerList
+
+	log := logs.NewLogger()
+	log.SetLogger(logs.AdapterConsole)
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(payload)))
+
+	if err == nil {
+		if len(headers) > 0 {
+			for i := 0; i < len(headers); i++ {
+				header := strings.Split(headers[i], ":")
+				req.Header.Add(strings.TrimSpace(header[0]), strings.TrimSpace(header[1]))
+			}
+		}
+
+		startTime := time.Now().UnixNano() / int64(time.Millisecond)
+		resp, err := client.Do(req)
+		endTime := time.Now().UnixNano() / int64(time.Millisecond)
+
+		responseTime := int(endTime - startTime)
+
+		response <- responseTime
+		if err != nil {
+			log.Debug(err.Error())
+			httpErrorChannel <- err.Error()
+		} else {
+			responseStatsChannel <- resp.StatusCode
+		}
+	} else {
+		log.Debug(err.Error())
+		httpErrorChannel <- err.Error()
+		return
+	}
 }

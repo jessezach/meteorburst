@@ -16,8 +16,10 @@ type Stop struct {
 
 // Resp received from clients
 type Resp struct {
-	MType   int
-	Content string
+	MType      int
+	Content    string
+	StatusCode string
+	Error      string
 }
 
 // Writer contains a tcp socket connection object
@@ -48,8 +50,15 @@ func reader(conn net.Conn) {
 			log.Debug("Connection closed by a client. Total slaves %v", slaves)
 			return
 		}
-		resp, _ := strconv.Atoi(r.Content)
-		response <- resp
+		responseTime, _ := strconv.Atoi(r.Content)
+		log.Debug("Content %v", r.Content)
+		if r.Error != "" {
+			httpErrorChannel <- r.Error
+		} else {
+			code, _ := strconv.Atoi(r.StatusCode)
+			response <- responseTime
+			responseStatsChannel <- code
+		}
 	}
 }
 
